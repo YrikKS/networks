@@ -6,6 +6,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.PrintWriter
 import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Duration
 import java.util.*
 
@@ -17,7 +19,7 @@ data class FileExchange(private val socket: Socket) {
     private val timeStart = Duration.ofNanos(System.nanoTime())
     private var isEnd = false
     private var nameFile = ""
-    private var sizeFile = 0
+    private var sizeFile = 0L
     private lateinit var file: File
 
     suspend fun printSpeedSend() {
@@ -54,7 +56,6 @@ data class FileExchange(private val socket: Socket) {
     }
 
     suspend fun send(): Boolean {
-        println("start")
         if (!readData()) {
             return false
         }
@@ -76,6 +77,12 @@ data class FileExchange(private val socket: Socket) {
                 }
                 downloadSize += momentSpeed
             }
+            if (sizeFile != withContext(Dispatchers.IO) {
+                    Files.size(Path.of("uploads/$nameFile"))
+                }) {
+                println("Incorrect size")
+                return false
+            }
         } catch (ex: Exception) {
             println("error with socket")
             return false
@@ -95,7 +102,6 @@ data class FileExchange(private val socket: Socket) {
 
     private suspend fun readData(): Boolean {
         var readSettings: String = ""
-        println("ayyy")
         var byte = ByteArray(100)
         while (readSettings.findAnyOf(listOf("end\n"), 0, false) == null) {
             readSettings += withContext(Dispatchers.IO) {
@@ -103,13 +109,12 @@ data class FileExchange(private val socket: Socket) {
                 byte.copyOfRange(0, rs).decodeToString()
             }
         }
-        println(readSettings)
         val reg = Regex("(FileName: )([\\w.]+)(\\n)(Size: )([\\d]+)")
         val res = reg.find(readSettings)
         return if (res != null) {
             res.apply {
                 nameFile = groups[2]?.value?.toString()!!
-                sizeFile = groups[5]?.value?.toInt()!!
+                sizeFile = groups[5]?.value?.toLong()!!
             }
             true
         } else {
