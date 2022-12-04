@@ -20,6 +20,7 @@ data class FileExchange(private val socket: Socket) {
     private var isEnd = false
     private var nameFile = ""
     private var sizeFile = 0L
+    private var hashFile = 0
     private lateinit var file: File
 
     suspend fun printSpeedSend() {
@@ -55,6 +56,17 @@ data class FileExchange(private val socket: Socket) {
         }
     }
 
+    fun getHashFile() : Int {
+        val byteArr = CharArray(1000)
+        var hash = 0
+        val readerFile = File("uploads/${nameFile}").bufferedReader()
+        while (readerFile.read(byteArr) != -1) {
+            hash += String(byteArr).hashCode() % Int.MAX_VALUE
+        }
+        readerFile.close()
+        return hash
+    }
+
     suspend fun send(): Boolean {
         if (!readData()) {
             return false
@@ -77,9 +89,10 @@ data class FileExchange(private val socket: Socket) {
                 }
                 downloadSize += momentSpeed
             }
-            if (sizeFile != withContext(Dispatchers.IO) {
-                    Files.size(Path.of("uploads/$nameFile"))
-                }) {
+            withContext(Dispatchers.IO) {
+                outPutFile.close()
+            }
+            if (getHashFile() != hashFile) {
                 println("Incorrect size")
                 return false
             }
@@ -102,19 +115,20 @@ data class FileExchange(private val socket: Socket) {
 
     private suspend fun readData(): Boolean {
         var readSettings: String = ""
-        var byte = ByteArray(100)
+        var byte = ByteArray(1000)
         while (readSettings.findAnyOf(listOf("end\n"), 0, false) == null) {
             readSettings += withContext(Dispatchers.IO) {
                 val rs = socket.getInputStream().read(byte)
                 byte.copyOfRange(0, rs).decodeToString()
             }
         }
-        val reg = Regex("(FileName: )([\\w.]+)(\\n)(Size: )([\\d]+)")
+        val reg = Regex("(FileName: )([\\w.]+)(\\n)(Size: )([\\d]+)(\\n)(Hash: )([-\\d]+)")
         val res = reg.find(readSettings)
         return if (res != null) {
             res.apply {
                 nameFile = groups[2]?.value?.toString()!!
                 sizeFile = groups[5]?.value?.toLong()!!
+                hashFile = groups[8]?.value?.toInt()!!
             }
             true
         } else {

@@ -9,14 +9,23 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 data class FileSender(val socket: Socket, val pathFile: String) {
-    private val readerFile = File(pathFile).bufferedReader()
+    private var readerFile = File(pathFile).bufferedReader()
     private val sizeFile = Files.size(Path.of(pathFile))
     private val writer = PrintWriter(socket.outputStream, true)
     private val reader = BufferedReader(InputStreamReader(socket.inputStream))
 
+    fun getHashFile() : Int {
+        val byteArr = CharArray(1000)
+        var hash = 0
+        while (readerFile.read(byteArr) != -1) {
+            hash += String(byteArr).hashCode() % Int.MAX_VALUE
+        }
+        readerFile = File(pathFile).bufferedReader()
+        return hash
+    }
 
     fun writeRequest() {
-        writer.write("FileName: ${pathFile.substringAfterLast("/")}\nSize: $sizeFile\nend\n")
+        writer.write("FileName: ${pathFile.substringAfterLast("/")}\nSize: $sizeFile\nHash: ${getHashFile()}\nend\n")
         writer.flush()
     }
 
@@ -26,7 +35,7 @@ data class FileSender(val socket: Socket, val pathFile: String) {
 
     fun wrightFile() {
         var sendingByte = 0
-        val byteArr = CharArray(100)
+        val byteArr = CharArray(1000)
         while (sendingByte < sizeFile) {
             val readInMoment = readerFile.read(byteArr)
             if (readInMoment == -1) {
