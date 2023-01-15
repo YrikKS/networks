@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="623.0" prefWidth="915.0" style="-fx-background-color: #A6F16C;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.nsu.org.main.lab4snake.controller.GameController">
+   <Canvas fx:id="board" height="441.0" layoutX="59.0" layoutY="125.0" width="529.0" />
+   <TextArea fx:id="textField" disable="true" layoutX="652.0" layoutY="141.0" prefHeight="409.0" prefWidth="209.0" wrapText="true">
+      <font>
+         <Font name="Bookman Old Style Bold" size="12.0" />
+      </font></TextArea>
+   <Label alignment="CENTER" layoutX="128.0" layoutY="31.0" prefHeight="66.0" prefWidth="704.0" text="SNAKE">
+      <font>
+         <Font name="Bookman Old Style Bold" size="41.0" />
+      </font>
+   </Label>
+   <Label alignment="CENTER" contentDisplay="CENTER" layoutX="652.0" layoutY="83.0" prefHeight="38.0" prefWidth="209.0" text="Score" textAlignment="CENTER">
+      <font>
+         <Font name="Bookman Old Style Bold" size="20.0" />
+      </font>
+   </Label>
+   <Button layoutX="700.0" layoutY="575.0" mnemonicParsing="false" onAction="#onExitButtonPressed" prefHeight="38.0" prefWidth="131.0" text="EXIT">
+      <font>
+         <Font name="Bookman Old Style Bold" size="16.0" />
+      </font>
+   </Button>
+</AnchorPane>
